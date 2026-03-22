@@ -1,12 +1,6 @@
 import '../styles/globals.scss'
 
-import SandboxBanner from '@/components/Sandbox/SandboxBanner'
-import { UserContextProvider } from '@/providers/auth'
-import { getServerSideAPI } from '@/utils/client/serverside'
-import { getAuthenticatedUser, getUserOrganizations } from '@/utils/user'
-import { schemas } from '@polar-sh/client'
 import { GeistSans } from 'geist/font/sans'
-import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { Metadata } from 'next/types'
 import { twMerge } from 'tailwind-merge'
 import {
@@ -34,29 +28,11 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://polar.sh/'),
 }
 
-export default async function RootLayout({
-  // Layouts must accept a children prop.
-  // This will be populated with nested layouts or pages
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const api = getServerSideAPI()
-
-  let authenticatedUser: schemas['UserRead'] | undefined = undefined
-  let userOrganizations: schemas['Organization'][] = []
-
-  try {
-    authenticatedUser = await getAuthenticatedUser()
-    userOrganizations = await getUserOrganizations(api)
-  } catch (e) {
-    // Silently swallow errors during build, typically when rendering static pages
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
-    if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) {
-      throw e
-    }
-  }
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -83,21 +59,15 @@ export default async function RootLayout({
           GeistSans.className,
         )}
       >
-        <UserContextProvider
-          user={authenticatedUser}
-          userOrganizations={userOrganizations}
-        >
-          <PolarPostHogProvider>
-            <PolarToploaderProvider>
-              <PolarQueryClientProvider>
-                <PolarNuqsProvider>
-                  <SandboxBanner />
-                  {children}
-                </PolarNuqsProvider>
-              </PolarQueryClientProvider>
-            </PolarToploaderProvider>
-          </PolarPostHogProvider>
-        </UserContextProvider>
+        <PolarPostHogProvider>
+          <PolarToploaderProvider>
+            <PolarQueryClientProvider>
+              <PolarNuqsProvider>
+                {children}
+              </PolarNuqsProvider>
+            </PolarQueryClientProvider>
+          </PolarToploaderProvider>
+        </PolarPostHogProvider>
       </body>
     </html>
   )
